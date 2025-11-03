@@ -100,7 +100,6 @@ theme: auto
 
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment
-## Docs: gh分支部署代码，main分支用来部署内容
 deploy:
   type: git
   repo: https://github.com/mei-lun/ci-blog
