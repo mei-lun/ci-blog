@@ -26,6 +26,31 @@ jobs:
       - name: Build Static Files
         run: npm run build  # 产物输出到 ./public
 
+      # 🔥 修复权限：用 sudo 确保全程有权操作，调整脚本顺序
+      - name: Clean & Rebuild Artifact（修复权限问题）
+        run: |
+          # 1. 先创建新目录（当前用户默认有权限）
+          mkdir -p ./final-public
+          
+          # 2. 用 sudo 复制产物（避免原文件权限不足）
+          sudo cp -rL ./public/* ./final-public/  # -L：跟随链接，断链合规
+          
+          # 3. 用 sudo 删除隐藏风险文件
+          sudo find ./final-public -name ".git" -exec rm -rf {} +
+          sudo find ./final-public -name ".DS_Store" -delete
+          sudo find ./final-public -name ".*" ! -name ".html" ! -name ".css" ! -name ".js" ! -name ".png" ! -name ".jpg" ! -name ".svg" -delete
+          
+          # 4. 用 sudo 重置权限（避免 Permission denied）
+          sudo chmod -R 644 ./final-public/*  # 普通文件权限
+          sudo chmod -R 755 ./final-public    # 目录权限（确保能访问子目录）
+          
+          # 5. 验证产物合规（无违规文件）
+          INVALID=$(sudo find ./final-public ! -type f ! -type d)
+          [ -n "$INVALID" ] && echo "❌ Invalid files: $INVALID" && exit 1
+          
+          du -sh ./final-public
+          echo "✅ 产物合规+权限修复完成"
+
       - name: Upload Pages Artifact
         uses: actions/upload-artifact@v4
         with:
