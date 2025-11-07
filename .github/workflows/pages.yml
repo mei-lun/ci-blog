@@ -39,8 +39,6 @@ jobs:
           publish_branch: main
           # 5. 提交信息（可选）
           commit_message: ${{ github.event.head_commit.message }}
-          # 6. 强制孤儿分支（避免冲突，推荐）
-          force_orphan: true
           # 7. 提交者信息（可选，防止提交身份异常）
           user_name: "mei-lun"
           user_email: "848843249@qq.com"
