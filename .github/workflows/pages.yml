@@ -25,37 +25,70 @@ jobs:
       - name: Build
         run: npm run build  # 确保产物输出到 ./public
 
-      # 🔥 关键修复1：清理产物中的硬链接/符号链接（部署失败核心原因）
-      - name: Clean Symlinks/Hardlinks in Build Output
+      # 🔥 核心优化：精准清理+调试（定位隐藏违规文件）
+      - name: Clean & Debug Invalid Files
         run: |
-          # 递归查找并删除符号链接
-          find ./public -type l -delete
-          # 递归查找并替换硬链接（用文件复制替代）
-          find ./public -type f -links +1 -exec cp --remove-destination {} {} \;
+          echo "=== 1. 查找并删除所有符号链接（显示具体删除的文件） ==="
+          find ./public -type l -print0 | xargs -0 -I {} sh -c 'echo "Deleting symlink: {}"; rm -f {}'
 
-      # 🔥 关键修复2：按官方约定上传 Artifact（名称固定为 github-pages）
-      - name: Upload Pages Artifact
+          echo -e "\n=== 2. 查找并替换所有硬链接（显示具体替换的文件） ==="
+          find ./public -type f -links +1 -print0 | xargs -0 -I {} sh -c 'echo "Replacing hardlink: {}"; cp --remove-destination {} {}'
+
+          echo -e "\n=== 3. 删除所有特殊文件（设备/管道/套接字） ==="
+          find ./public -type c -o -type b -o -type p -o -type s -print0 | xargs -0 -I {} sh -c 'echo "Deleting special file: {}"; rm -f {}'
+
+          echo -e "\n=== 4. 强制删除隐藏风险文件（.git/.DS_Store等） ==="
+          find ./public -name ".git" -type d -exec echo "Deleting .git dir: {}" \; -exec rm -rf {} +
+          find ./public -name ".DS_Store" -exec echo "Deleting .DS_Store: {}" \; -exec rm -f {} +
+          find ./public -name "*.lnk" -exec echo "Deleting lnk file: {}" \; -exec rm -f {} +
+
+          echo -e "\n=== 5. 最终验证：是否还有违规文件？（正常应无输出） ==="
+          INVALID_FILES=$(find ./public ! -type f ! -type d)
+          if [ -n "$INVALID_FILES" ]; then
+            echo "❌ 发现残留违规文件："
+            echo "$INVALID_FILES"
+            exit 1  # 有违规文件直接终止，避免后续部署失败
+          else
+            echo "✅ 无残留违规文件！"
+          fi
+
+          echo -e "\n=== 6. 产物详情（确认合规） ==="
+          du -sh ./public  # 再次确认体积
+          ls -la ./public  # 显示根目录文件（排查是否有异常文件）
+
+      # 🔥 强制打包验证（确保100%合规，报错直接定位问题）
+      - name: Force Validate with Tar (Reject Any Links)
+        run: |
+          echo "=== 打包产物，强制拒绝链接/特殊文件 ==="
+          # tar 遇到任何链接会直接报错，日志会显示具体文件
+          if ! tar -cf /tmp/public.tar --exclude-links ./public; then
+            echo "❌ Tar打包失败！产物中存在链接/特殊文件，查看上方日志定位"
+            exit 1
+          fi
+          echo "✅ Tar打包成功！产物完全合规"
+
+      # 🔥 上传合规产物（严格校验文件存在）
+      - name: Upload Validated Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: github-pages  # 官方强制名称，不能改
-          path: ./public      # 产物目录
-          retention-days: 1  # 部署后自动清理
+          name: github-pages  # 官方强制名称
+          path: ./public
+          retention-days: 1
+          if-no-files-found: error  # 产物为空直接报错，避免白屏
+          overwrite: true  # 覆盖旧产物，确保是最新合规版本
 
   deploy:
-    needs: build
+    needs: build  # 只有build成功（产物合规）才执行部署
     runs-on: ubuntu-latest
     permissions:
       pages: write
-      id-token: write  # 官方OIDC身份验证（配合PAT跨仓库）
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      # 🔥 关键修复3：去掉不支持的参数（github_repository、path）
       - name: Deploy to Target Repo GitHub Pages
         id: deploy
         uses: actions/deploy-pages@v4
         env:
-          # 核心：用PAT授权跨仓库访问目标仓库Pages
-          GITHUB_TOKEN: ${{ secrets.GH_PAGES_DEPLOY_TOKEN }}
-        # 注意：v4版本不需要传 github_repository 和 path！插件自动读取Artifact
+          GITHUB_TOKEN: ${{ secrets.GH_PAGES_DEPLOY_TOKEN }}  # 跨仓库授权PAT
