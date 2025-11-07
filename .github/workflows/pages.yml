@@ -1,43 +1,46 @@
-name: ci-blog → mei-lun Pages（极简零提交）
+name: Pages
 on:
   push:
-    branches: ["gh-pages"]
+    branches: ["gh-pages"]  # 触发条件不变
+
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    if: contains(github.event.head_commit.message, 'deploy')
-    permissions:
-      id-token: write
-      pages: write
+    if: ${{ contains(github.event.head_commit.message, 'deploy')}}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: gh-pages
+          token: ${{ secrets.GITHUB_TOKEN }}
           submodules: recursive
 
-      - uses: actions/setup-node@v4
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
         with:
           node-version: "22"
+          cache: "npm"  # 简化缓存配置
 
-      # 构建+暴力清理（直接删除所有可能含链接的文件）
-      - run: |
-          npm install --production
-          npm run build
-          # 暴力删除高危目录（node_modules/.cache 是链接重灾区）
-          sudo rm -rf ./public/node_modules ./public/.cache ./public/.git
-          # 彻底删除所有链接/特殊文件（无遗漏）
-          sudo find ./public -type l -o -type c -o -type b -o -type p -o -type s -delete
-          # 硬链接转普通文件
-          sudo find ./public -type f -links +1 -exec cp --remove-destination {} {} \;
-          # 只保留静态文件（其他全删，避免隐藏风险）
-          sudo find ./public -type f ! -name "*.html" ! -name "*.css" ! -name "*.js" ! -name "*.png" ! -name "*.jpg" ! -name "*.svg" ! -name "*.gif" -delete
-          echo "✅ 产物清理完成"
+      - name: Install Dependencies
+        run: npm install
 
-      - uses: actions/upload-artifact@v4
+      - name: Build
+        run: npm run build  # 确保产物输出到 ./public
+
+      # 🔥 修正后的部署步骤（关键修改）
+      - name: Deploy to ghpage repo (GitHub Pages)
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          name: github-pages
-          path: ./public/
-
-      - uses: actions/deploy-pages@v4
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAGES_DEPLOY_TOKEN }}
+          # 1. 跨仓库地址：格式「你的GitHub用户名/目标仓库名」（无需 https 前缀）
+          external_repository: mei-lun/mei-lun
+          # 2. 凭证：直接引用 Secrets 中的 PAT（插件会自动识别）
+          personal_token: ${{ secrets.GH_PAGES_DEPLOY_TOKEN }}
+          # 3. 构建产物目录（和你的 npm run build 输出一致）
+          publish_dir: ./public
+          # 4. 推送到目标仓库的分支（GitHub Pages 默认读取 gh-pages）
+          publish_branch: main
+          # 5. 提交信息（可选）
+          commit_message: ${{ github.event.head_commit.message }}
+          # 6. 强制孤儿分支（避免冲突，推荐）
+          force_orphan: true
+          # 7. 提交者信息（可选，防止提交身份异常）
+          user_name: "mei-lun"
+          user_email: "848843249@qq.com"
