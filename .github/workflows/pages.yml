@@ -1,7 +1,7 @@
 name: Pages
 on:
   push:
-    branches: ["gh-pages"]  # 触发条件不变：推送到原仓库的 gh-pages 分支且含 deploy 消息
+    branches: ["gh-pages"]  # 触发条件不变
 
 jobs:
   build:
@@ -10,32 +10,37 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}  # 原仓库拉取代码，用默认 token 即可
-          submodules: recursive  # 若有子模块，保留此配置
+          token: ${{ secrets.GITHUB_TOKEN }}
+          submodules: recursive
 
       - name: Use Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: "npm"  # 简化依赖缓存（比原配置更简洁，无需手动配置 cache 插件）
+          cache: "npm"  # 简化缓存配置
 
       - name: Install Dependencies
         run: npm install
 
       - name: Build
-        run: npm run build  # 构建产物输出到 ./public（和原配置一致）
+        run: npm run build  # 确保产物输出到 ./public
 
-      # 关键：跨仓库推送到 ghpage 仓库的 gh-pages 分支
+      # 🔥 修正后的部署步骤（关键修改）
       - name: Deploy to ghpage repo (GitHub Pages)
-        uses: peaceiris/actions-gh-pages@v4  # 专门用于 Pages 跨仓库部署的插件
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          # 1. 目标仓库地址（格式：https://PAT@github.com/用户名/仓库名.git）
-          repo: https://${{ secrets.GH_PAGES_DEPLOY_TOKEN }}@github.com/mei-lun/mei-lun.git
-          # 2. 构建产物目录（和你 npm run build 输出的目录一致，这里是 ./public）
+          # 1. 跨仓库地址：格式「你的GitHub用户名/目标仓库名」（无需 https 前缀）
+          external_repository: mei-lun/mei-lun
+          # 2. 凭证：直接引用 Secrets 中的 PAT（插件会自动识别）
+          personal_token: ${{ secrets.GH_PAGES_DEPLOY_TOKEN }}
+          # 3. 构建产物目录（和你的 npm run build 输出一致）
           publish_dir: ./public
-          # 3. 推送到目标仓库的哪个分支（GitHub Pages 默认读取 gh-pages 分支）
+          # 4. 推送到目标仓库的分支（GitHub Pages 默认读取 gh-pages）
           publish_branch: main
-          # 4. 提交信息（可选，自定义）
+          # 5. 提交信息（可选）
           commit_message: ${{ github.event.head_commit.message }}
-          # 5. 强制推送（覆盖目标分支的历史，避免冲突，可选但推荐）
+          # 6. 强制孤儿分支（避免冲突，推荐）
           force_orphan: true
+          # 7. 提交者信息（可选，防止提交身份异常）
+          user_name: "mei-lun"
+          user_email: "848843249@qq.com"
