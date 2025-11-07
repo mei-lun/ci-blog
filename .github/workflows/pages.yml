@@ -1,13 +1,13 @@
-name: Pages（ci-blog Artifact → mei-lun Pages）
+name: Pages（ci-blog Artifact → mei-lun Pages，零提交）
 on:
   push:
-    branches: ["gh-pages"]  # 触发：ci-blog 的 gh-pages 分支
-    if: ${{ contains(github.event.head_commit.message, 'deploy')}}  # 含 deploy 关键词
+    branches: ["gh-pages"]  # 触发条件：ci-blog 的 gh-pages 分支推送（移除此处的 if）
 
 jobs:
   # 第一步：ci-blog 仓库构建产物 + 清理合规化 + 上传 Artifact
   build-and-upload:
     runs-on: ubuntu-latest
+    if: ${{ contains(github.event.head_commit.message, 'deploy')}}  # 把 if 移到作业层级
     steps:
       # 1. 拉取 ci-blog 仓库 gh-pages 分支源码
       - name: Checkout ci-blog 源码（gh-pages 分支）
