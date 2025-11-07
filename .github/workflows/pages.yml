@@ -25,20 +25,40 @@ jobs:
       - name: Build
         run: npm run build  # 确保产物输出到 ./public
 
-      # 🔥 修正后的部署步骤（关键修改）
-      - name: Deploy to ghpage repo (GitHub Pages)
-        uses: peaceiris/actions-gh-pages@v4
+      # 🔥 关键修改：上传产物到 Artifact（不推送到任何仓库分支）
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
         with:
-          # 1. 跨仓库地址：格式「你的GitHub用户名/目标仓库名」（无需 https 前缀）
-          external_repository: mei-lun/mei-lun
-          # 2. 凭证：直接引用 Secrets 中的 PAT（插件会自动识别）
-          personal_token: ${{ secrets.GH_PAGES_DEPLOY_TOKEN }}
-          # 3. 构建产物目录（和你的 npm run build 输出一致）
-          publish_dir: ./public
-          # 4. 推送到目标仓库的分支（GitHub Pages 默认读取 gh-pages）
-          publish_branch: main
-          # 5. 提交信息（可选）
-          commit_message: ${{ github.event.head_commit.message }}
-          # 7. 提交者信息（可选，防止提交身份异常）
-          user_name: "mei-lun"
-          user_email: "848843249@qq.com"
+          name: github-pages-artifact  # Artifact 名称（固定，后续部署要引用）
+          path: ./public  # 产物目录（与 build 输出一致）
+          retention-days: 1  # 产物保留 1 天（部署后自动清理，不占空间）
+
+  # 🔥 跨仓库部署到目标仓库的 GitHub Pages（零提交）
+  deploy:
+    needs: build  # 依赖 build 阶段的 Artifact
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write  # 允许操作 Pages
+      id-token: write  # 官方身份验证（配合 PAT 跨仓库）
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      # 下载之前上传的产物
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: github-pages-artifact  # 与上传时的名称一致
+          path: ./public  # 下载到 ./public 目录
+
+      # 🔑 跨仓库部署核心：用 PAT 授权，直接部署到目标仓库 Pages
+      - name: Deploy to Target Repo GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
+        env:
+          # 用 PAT 替换默认令牌，授权访问目标仓库
+          GITHUB_TOKEN: ${{ secrets.GH_PAGES_DEPLOY_TOKEN }}
+        with:
+          # 强制指定目标仓库的 Pages 部署地址（跨仓库关键）
+          github_repository: mei-lun/mei-lun
+          path: ./public  # 部署产物目录
