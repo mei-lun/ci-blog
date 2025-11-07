@@ -17,7 +17,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: "npm"  # 简化缓存配置
+          cache: "npm"
 
       - name: Install Dependencies
         run: npm install
@@ -25,40 +25,39 @@ jobs:
       - name: Build
         run: npm run build  # 确保产物输出到 ./public
 
-      # 🔥 关键修改：上传产物到 Artifact（不推送到任何仓库分支）
-      - name: Upload Build Artifact
+      # 🔥 关键修复1：Artifact 名称必须为 "github-pages"（官方强制约定）
+      - name: Upload Pages Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: github-pages-artifact  # Artifact 名称（固定，后续部署要引用）
-          path: ./public  # 产物目录（与 build 输出一致）
-          retention-days: 1  # 产物保留 1 天（部署后自动清理，不占空间）
+          name: github-pages  # 必须是这个名称！deploy-pages 只认这个
+          path: ./public      # 产物目录与 build 输出一致
+          retention-days: 1  # 部署后自动清理，不占空间
 
-  # 🔥 跨仓库部署到目标仓库的 GitHub Pages（零提交）
   deploy:
-    needs: build  # 依赖 build 阶段的 Artifact
+    needs: build  # 依赖 build 阶段完成
     runs-on: ubuntu-latest
     permissions:
-      pages: write  # 允许操作 Pages
-      id-token: write  # 官方身份验证（配合 PAT 跨仓库）
+      pages: write
+      id-token: write  # 配合 PAT 实现跨仓库身份验证
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      # 下载之前上传的产物
-      - name: Download Artifact
+      # 🔥 关键修复2：下载时使用固定名称 "github-pages"
+      - name: Download Pages Artifact
         uses: actions/download-artifact@v4
         with:
-          name: github-pages-artifact  # 与上传时的名称一致
-          path: ./public  # 下载到 ./public 目录
+          name: github-pages  # 与上传时的名称完全一致
+          path: ./public      # 下载到 ./public，保持路径统一
 
-      # 🔑 跨仓库部署核心：用 PAT 授权，直接部署到目标仓库 Pages
+      # 跨仓库部署核心步骤（PAT 授权 + 指定目标仓库）
       - name: Deploy to Target Repo GitHub Pages
         id: deploy
         uses: actions/deploy-pages@v4
         env:
-          # 用 PAT 替换默认令牌，授权访问目标仓库
+          # 传入 PAT 授权跨仓库访问（必须有目标仓库写权限）
           GITHUB_TOKEN: ${{ secrets.GH_PAGES_DEPLOY_TOKEN }}
         with:
-          # 强制指定目标仓库的 Pages 部署地址（跨仓库关键）
+          # 明确指定目标仓库（格式：用户名/仓库名）
           github_repository: mei-lun/mei-lun
           path: ./public  # 部署产物目录
