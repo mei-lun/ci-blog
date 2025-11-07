@@ -1,62 +1,47 @@
-name: ci-blog → mei-lun Pages（官方原生，零提交）
+name: ci-blog → mei-lun Pages（零提交，修复权限）
 on:
   push:
-    branches: ["gh-pages"]
+    branches: ["gh-pages"]  # 仅 ci-blog 的 gh-pages 分支触发
 jobs:
-  build:
+  build-upload:
     runs-on: ubuntu-latest
     if: contains(github.event.head_commit.message, 'deploy')
     steps:
-      # 1. 拉取ci-blog源码
-      - name: Checkout ci-blog
+      - name: Checkout ci-blog (gh-pages)
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           submodules: recursive
           ref: gh-pages
 
-      # 2. 构建产物（仅输出静态文件到./public）
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: "npm"
 
-      - name: Install & Build
-        run: |
-          npm install --production
-          npm run build  # 确保输出到./public
+      - name: Install Dependencies
+        run: npm install --production
 
-      # 3. 产物合规化（仅保留静态文件，无任何链接）
-      - name: Clean Static Files
-        run: |
-          find ./public -type l -delete
-          find ./public -name ".git" -exec rm -rf {} +
-          find ./public -name ".*" ! -name ".html" ! -name ".css" ! -name ".js" ! -name ".png" ! -name ".jpg" ! -name ".svg" -delete
-          chmod -R 644 ./public/*
+      - name: Build Static Files
+        run: npm run build  # 产物输出到 ./public
 
-      # 4. 上传产物到GitHub Artifact（官方存储，不进mei-lun仓库）
       - name: Upload Pages Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: github-pages  # 官方强制名称，Pages服务仅识别此名称
-          path: ./public/
+          name: github-pages  # 官方强制名称
+          path: ./final-public/
           retention-days: 1
+          if-no-files-found: error
 
-  # 5. 官方跨仓库部署到mei-lun Pages（零提交，仅操作Pages服务）
   deploy:
-    needs: build
+    needs: build-upload
     runs-on: ubuntu-latest
     permissions:
       id-token: write
-      pages: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
+      pages: write  # 部署必需权限
     steps:
-      - name: Deploy to mei-lun Pages
-        id: deploy
+      - name: Deploy to mei-lun GitHub Pages（零提交）
         uses: actions/deploy-pages@v4
         env:
-          # 核心：你的PAT只需有mei-lun仓库的Pages操作权限
-          GITHUB_TOKEN: ${{ secrets.GH_PAGES_DEPLOY_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAGES_DEPLOY_TOKEN }}  # 你的PAT（有权操作mei-lun的Pages）
