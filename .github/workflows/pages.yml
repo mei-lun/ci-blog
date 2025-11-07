@@ -25,39 +25,37 @@ jobs:
       - name: Build
         run: npm run build  # 确保产物输出到 ./public
 
-      # 🔥 关键修复1：Artifact 名称必须为 "github-pages"（官方强制约定）
+      # 🔥 关键修复1：清理产物中的硬链接/符号链接（部署失败核心原因）
+      - name: Clean Symlinks/Hardlinks in Build Output
+        run: |
+          # 递归查找并删除符号链接
+          find ./public -type l -delete
+          # 递归查找并替换硬链接（用文件复制替代）
+          find ./public -type f -links +1 -exec cp --remove-destination {} {} \;
+
+      # 🔥 关键修复2：按官方约定上传 Artifact（名称固定为 github-pages）
       - name: Upload Pages Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: github-pages  # 必须是这个名称！deploy-pages 只认这个
-          path: ./public      # 产物目录与 build 输出一致
-          retention-days: 1  # 部署后自动清理，不占空间
+          name: github-pages  # 官方强制名称，不能改
+          path: ./public      # 产物目录
+          retention-days: 1  # 部署后自动清理
 
   deploy:
-    needs: build  # 依赖 build 阶段完成
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       pages: write
-      id-token: write  # 配合 PAT 实现跨仓库身份验证
+      id-token: write  # 官方OIDC身份验证（配合PAT跨仓库）
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      # 🔥 关键修复2：下载时使用固定名称 "github-pages"
-      - name: Download Pages Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: github-pages  # 与上传时的名称完全一致
-          path: ./public      # 下载到 ./public，保持路径统一
-
-      # 跨仓库部署核心步骤（PAT 授权 + 指定目标仓库）
+      # 🔥 关键修复3：去掉不支持的参数（github_repository、path）
       - name: Deploy to Target Repo GitHub Pages
         id: deploy
         uses: actions/deploy-pages@v4
         env:
-          # 传入 PAT 授权跨仓库访问（必须有目标仓库写权限）
+          # 核心：用PAT授权跨仓库访问目标仓库Pages
           GITHUB_TOKEN: ${{ secrets.GH_PAGES_DEPLOY_TOKEN }}
-        with:
-          # 明确指定目标仓库（格式：用户名/仓库名）
-          github_repository: mei-lun/mei-lun
-          path: ./public  # 部署产物目录
+        # 注意：v4版本不需要传 github_repository 和 path！插件自动读取Artifact
