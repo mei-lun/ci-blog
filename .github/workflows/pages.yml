@@ -1,8 +1,7 @@
 name: Pages
-
 on:
   push:
-      branches: ["gh-pages"]
+    branches: ["gh-pages"]  # 触发条件不变：推送到原仓库的 gh-pages 分支且含 deploy 消息
 
 jobs:
   build:
@@ -11,40 +10,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          # If your repository depends on submodule, please see: https://github.com/actions/checkout
-          submodules: recursive
+          token: ${{ secrets.GITHUB_TOKEN }}  # 原仓库拉取代码，用默认 token 即可
+          submodules: recursive  # 若有子模块，保留此配置
+
       - name: Use Node.js 22
         uses: actions/setup-node@v4
         with:
-          # Examples: 20, 18.19, >=16.20.2, lts/Iron, lts/Hydrogen, *, latest, current, node
-          # Ref: https://github.com/actions/setup-node#supported-version-syntax
           node-version: "22"
-      - name: Cache NPM dependencies
-        uses: actions/cache@v4
-        with:
-          path: node_modules
-          key: ${{ runner.OS }}-npm-cache
-          restore-keys: |
-            ${{ runner.OS }}-npm-cache
+          cache: "npm"  # 简化依赖缓存（比原配置更简洁，无需手动配置 cache 插件）
+
       - name: Install Dependencies
         run: npm install
+
       - name: Build
-        run: npm run build
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        run: npm run build  # 构建产物输出到 ./public（和原配置一致）
+
+      # 关键：跨仓库推送到 ghpage 仓库的 gh-pages 分支
+      - name: Deploy to ghpage repo (GitHub Pages)
+        uses: peaceiris/actions-gh-pages@v4  # 专门用于 Pages 跨仓库部署的插件
         with:
-          path: ./public
-  deploy:
-    needs: build
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          # 1. 目标仓库地址（格式：https://PAT@github.com/用户名/仓库名.git）
+          repo: https://${{ secrets.GH_PAGES_DEPLOY_TOKEN }}@github.com:mei-lun/mei-lun.git
+          # 2. 构建产物目录（和你 npm run build 输出的目录一致，这里是 ./public）
+          publish_dir: ./public
+          # 3. 推送到目标仓库的哪个分支（GitHub Pages 默认读取 gh-pages 分支）
+          publish_branch: main
+          # 4. 提交信息（可选，自定义）
+          commit_message: ${{ github.event.head_commit.message }}
+          # 5. 强制推送（覆盖目标分支的历史，避免冲突，可选但推荐）
+          force_orphan: true
