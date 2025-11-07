@@ -1,81 +1,67 @@
-name: Pages（ci-blog Artifact → mei-lun Pages，零提交）
+name: ci-blog → mei-lun Pages（Artifact 零提交部署）
 on:
   push:
-    branches: ["gh-pages"]  # 触发条件：ci-blog 的 gh-pages 分支推送（移除此处的 if）
+    branches: ["gh-pages"]  # 仅触发：ci-blog 的 gh-pages 分支推送
 
 jobs:
-  # 第一步：ci-blog 仓库构建产物 + 清理合规化 + 上传 Artifact
-  build-and-upload:
+  build-upload:
     runs-on: ubuntu-latest
-    if: ${{ contains(github.event.head_commit.message, 'deploy')}}  # 把 if 移到作业层级
+    if: contains(github.event.head_commit.message, 'deploy')
     steps:
-      # 1. 拉取 ci-blog 仓库 gh-pages 分支源码
-      - name: Checkout ci-blog 源码（gh-pages 分支）
+      - name: Checkout ci-blog (gh-pages)
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}  # 操作 ci-blog 仓库，用默认令牌
+          token: ${{ secrets.GITHUB_TOKEN }}
           submodules: recursive
-          ref: gh-pages  # 明确拉取 gh-pages 分支
+          ref: gh-pages
 
-      # 2. 构建 ci-blog 产物（输出到 ./public）
-      - name: Use Node.js 22
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: "npm"
 
-      - name: Install Dependencies（ci-blog 项目）
-        run: npm install
+      - name: Install Dependencies
+        run: npm install --production
 
-      - name: Build 产物（ci-blog → ./public）
-        run: npm run build  # 确保产物输出到 ./public
+      - name: Build Static Files
+        run: npm run build  # 确保输出到 ./public
 
-      # 3. 终极产物清理（解决 Pages 部署拦截问题）
-      - name: Ultimate Cleanup（确保产物 100% 合规）
+      - name: Clean Invalid Files (100% Compliance)
         run: |
-          # 删除所有链接/特殊文件（ Pages 禁止的所有类型）
-          find ./public -type l -delete  # 符号链接
-          find ./public -type c -o -type b -o -type p -o -type s -delete  # 特殊文件
-          find ./public -type f -links +1 -exec cp --remove-destination {} {} \;  # 硬链接转普通文件
-
-          # 删除隐藏风险文件（避免元数据拦截）
+          find ./public -type l -delete
+          find ./public -type c -o -type b -o -type p -o -type s -delete
+          find ./public -type f -links +1 -exec cp --remove-destination {} {} \;
           find ./public -name ".git" -exec rm -rf {} +
           find ./public -name ".DS_Store" -delete
           find ./public -name ".*" ! -name ".html" ! -name ".css" ! -name ".js" ! -name ".png" ! -name ".jpg" ! -name ".svg" -delete
-
-          # 重置文件权限（ Pages 兼容权限）
           find ./public -type f -exec chmod 644 {} \;
           find ./public -type d -exec chmod 755 {} \;
-
-          # 验证：仅保留普通文件/目录（无违规内容）
           INVALID=$(find ./public ! -type f ! -type d)
-          if [ -n "$INVALID" ]; then echo "❌ 残留违规文件：$INVALID"; exit 1; fi
-          echo "✅ ci-blog 产物合规化完成（2.6MB）"
+          [ -n "$INVALID" ] && echo "❌ Invalid files: $INVALID" && exit 1
+          echo "✅ Build output is compliant"
 
-      # 4. 上传产物到 Artifact（名称固定为 github-pages，官方要求）
-      - name: Upload ci-blog 产物到 Artifact
+      - name: Upload Pages Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: github-pages  # 官方强制名称，deploy-pages 仅识别此名称
-          path: ./public      # ci-blog 产物目录
-          retention-days: 1  # 部署后自动清理，不占空间
-          if-no-files-found: error  # 产物为空直接报错
+          name: github-pages  # 官方强制名称
+          path: ./public/
+          retention-days: 1
+          if-no-files-found: error
 
-  # 第二步：从 Artifact 跨仓库部署到 mei-lun/mei-lun Pages（零提交）
-  deploy-to-mei-lun-pages:
-    needs: build-and-upload  # 依赖第一步的 Artifact
+  deploy:
+    needs: build-upload
     runs-on: ubuntu-latest
     permissions:
-      id-token: write  # 官方 OIDC 身份验证（配合 PAT 跨仓库）
+      id-token: write
+      pages: write  # 🔥 补全关键权限！部署 Pages 必须声明此权限
     steps:
-      # 关键：用 PAT 授权访问 mei-lun 仓库的 Pages 服务
-      - name: Deploy ci-blog Artifact to mei-lun Pages
+      - name: Deploy to mei-lun GitHub Pages
         uses: actions/deploy-pages@v4
         env:
-          # 核心跨仓库授权：用 PAT 替换默认令牌，获得 mei-lun 仓库的 Pages 操作权限
+          # 🔥 必须使用 mei-lun 仓库所有者的 PAT，且含 pages:write 权限
           GITHUB_TOKEN: ${{ secrets.GH_PAGES_DEPLOY_TOKEN }}
         with:
-          # 强制指定目标仓库（mei-lun/mei-lun），跨仓库关键配置
-          github_repository: mei-lun/mei-lun
-          timeout: 300  # 延长超时（5分钟），避免网络问题
-          error_count: 3  # 3次重试，提高成功率
+          github_repository: mei-lun/mei-lun  # 目标仓库，无拼写错误
+          timeout: 300
+          error_count: 3
