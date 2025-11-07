@@ -30,7 +30,7 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4  # 专门用于 Pages 跨仓库部署的插件
         with:
           # 1. 目标仓库地址（格式：https://PAT@github.com/用户名/仓库名.git）
-          repo: https://${{ secrets.GH_PAGES_DEPLOY_TOKEN }}@github.com:mei-lun/mei-lun.git
+          repo: https://${{ secrets.GH_PAGES_DEPLOY_TOKEN }}@github.com/mei-lun/mei-lun.git
           # 2. 构建产物目录（和你 npm run build 输出的目录一致，这里是 ./public）
           publish_dir: ./public
           # 3. 推送到目标仓库的哪个分支（GitHub Pages 默认读取 gh-pages 分支）
