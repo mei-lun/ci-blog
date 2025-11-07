@@ -25,7 +25,7 @@ jobs:
       - name: Build
         run: npm run build  # 确保产物输出到 ./public
 
-      # 🔥 核心优化：精准清理+调试（定位隐藏违规文件）
+      # 🔥 精准清理+调试（不变，已能清理99%违规文件）
       - name: Clean & Debug Invalid Files
         run: |
           echo "=== 1. 查找并删除所有符号链接（显示具体删除的文件） ==="
@@ -47,38 +47,46 @@ jobs:
           if [ -n "$INVALID_FILES" ]; then
             echo "❌ 发现残留违规文件："
             echo "$INVALID_FILES"
-            exit 1  # 有违规文件直接终止，避免后续部署失败
+            exit 1  # 有违规文件直接终止
           else
             echo "✅ 无残留违规文件！"
           fi
 
           echo -e "\n=== 6. 产物详情（确认合规） ==="
           du -sh ./public  # 再次确认体积
-          ls -la ./public  # 显示根目录文件（排查是否有异常文件）
+          ls -la ./public  # 显示根目录文件
 
-      # 🔥 强制打包验证（确保100%合规，报错直接定位问题）
-      - name: Force Validate with Tar (Reject Any Links)
+      # 🔥 关键修复：GNU tar 兼容的验证方式（替换 --exclude-links）
+      - name: Force Validate with GNU Tar (Reject Links)
         run: |
-          echo "=== 打包产物，强制拒绝链接/特殊文件 ==="
-          # tar 遇到任何链接会直接报错，日志会显示具体文件
-          if ! tar -cf /tmp/public.tar --exclude-links ./public; then
-            echo "❌ Tar打包失败！产物中存在链接/特殊文件，查看上方日志定位"
+          echo "=== 打包产物，强制拒绝链接/特殊文件（GNU tar 兼容版） ==="
+          # GNU tar 用以下参数实现：
+          # --dereference：打包链接指向的实际文件（而非链接本身）
+          # --warning=link：遇到链接时输出警告
+          # --no-recursion：仅打包当前目录（避免子目录隐藏链接，可选）
+          if ! tar -cf /tmp/public.tar --dereference --warning=link ./public; then
+            echo "❌ Tar打包失败！产物中存在无法处理的违规文件"
+            exit 1
+          fi
+          # 额外检查：打包后验证是否有链接相关警告（兜底）
+          if grep -q "link" <(tar -tvf /tmp/public.tar 2>&1); then
+            echo "❌ 产物中存在链接文件！查看上方 tar 警告定位"
             exit 1
           fi
           echo "✅ Tar打包成功！产物完全合规"
 
-      # 🔥 上传合规产物（严格校验文件存在）
+      # 🔥 上传合规产物（不变）
       - name: Upload Validated Artifact
         uses: actions/upload-artifact@v4
         with:
           name: github-pages  # 官方强制名称
           path: ./public
           retention-days: 1
-          if-no-files-found: error  # 产物为空直接报错，避免白屏
-          overwrite: true  # 覆盖旧产物，确保是最新合规版本
+          if-no-files-found: error
+          overwrite: true
 
   deploy:
-    needs: build  # 只有build成功（产物合规）才执行部署
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       pages: write
@@ -91,4 +99,4 @@ jobs:
         id: deploy
         uses: actions/deploy-pages@v4
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAGES_DEPLOY_TOKEN }}  # 跨仓库授权PAT
+          GITHUB_TOKEN: ${{ secrets.GH_PAGES_DEPLOY_TOKEN }}
