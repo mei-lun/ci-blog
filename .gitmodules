@@ -3,4 +3,4 @@
 	url = https://github.com/autoload/hexo-theme-auto.git
 [submodule "source/_posts/Notes"]
 	path = source/_posts/Notes
-	url = git@github.com:mei-lun/Notes.git
+	url = https://github.com/mei-lun/Notes.git
