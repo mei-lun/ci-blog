@@ -98,7 +98,7 @@ ignore:
 ## Themes: https://hexo.io/themes/
 ## theme: landscape
 theme: anatole-core
-#theme: auto
+##theme: auto
 
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment
