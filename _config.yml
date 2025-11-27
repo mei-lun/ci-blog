@@ -31,7 +31,7 @@ i18n_dir: :lang
 skip_render:
 
 # Writing
-new_post_name: :title.md # File name of new posts
+new_post_name: :name.md # File name of new posts
 default_layout: post
 titlecase: false # Transform title into titlecase
 external_link:
@@ -106,10 +106,3 @@ deploy:
   type: git
   repo: https://github.com/mei-lun/mei-lun
   branch: [main]
-
-auto_title:
-  enable: true  # 启用插件
-  type: filename  # 提取方式：filename=从文件名提取，first_h1=从文章第一个<h1>标题提取
-  separator: '-'  # 文件名分隔符（若文件名用 "-" 分隔，如 "VScode-快捷键手册.md"，会转为 "VScode 快捷键手册"）
-  exclude:  # 排除不需要处理的文件（可选）
-    - README.md  # 比如忽略 README 文件
