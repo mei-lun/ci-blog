@@ -4,6 +4,3 @@
 [submodule "source/_posts/Notes"]
 	path = source/_posts/Notes
 	url = https://github.com/mei-lun/Notes.git
-[submodule "themes/anatole-core"]
-	path = themes/anatole-core
-	url = https://github.com/mrcore/hexo-theme-Anatole-Core.git
