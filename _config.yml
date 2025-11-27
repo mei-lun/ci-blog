@@ -105,3 +105,11 @@ deploy:
   type: git
   repo: https://github.com/mei-lun/mei-lun
   branch: [main]
+
+auto_canonical:
+  enable: true
+  title_from: filename  # 标题提取来源：filename=文件名，first_h1=文章第一个<h1>标题
+  separator: '-'        # 文件名分隔符（比如 "VScode-快捷键.md" → "VScode 快捷键"）
+  exclude:
+    - README.md         # 忽略 README 文件（不提取标题）
+  canonical: false      # 关闭规范链接功能（仅用标题提取）
