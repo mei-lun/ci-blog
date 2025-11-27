@@ -13,12 +13,7 @@ jobs:
           #token: ${{ secrets.GITHUB_TOKEN }}
           token: ${{ secrets.GH_PAGES_DEPLOY_TOKEN }}
           submodules: recursive
-      - name: init submod
-        run: git submodule update --init --remote --recursive
-      - name: update submod code
-        run: git pull
-      - name: update submod
-        run: git submodule update
+          fetch-depth: 0
 
       - name: Use Node.js 22
         uses: actions/setup-node@v4
