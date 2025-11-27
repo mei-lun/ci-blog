@@ -10,7 +10,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          #token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_PAGES_DEPLOY_TOKEN }}
           submodules: recursive
 
       - name: Use Node.js 22
