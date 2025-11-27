@@ -1,6 +1,3 @@
 [submodule "themes/auto"]
 	path = themes/auto
 	url = https://github.com/autoload/hexo-theme-auto.git
-[submodule "source/Notes_Repo"]
-	path = source/Notes_Repo
-	url = https://github.com/mei-lun/Notes.git
