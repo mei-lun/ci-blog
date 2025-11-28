@@ -8,3 +8,6 @@
 [submodule "themes/anatole-core"]
 	path = themes/anatole-core
 	url = https://github.com/mei-lun/hexo-theme-Anatole-Core.git
+[submodule "themes/mylandscape"]
+	path = themes/mylandscape
+	url = https://github.com/mei-lun/hexo-theme-landscape.git
