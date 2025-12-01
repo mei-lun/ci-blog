@@ -100,6 +100,12 @@ theme: mylandscape
 #theme: anatole-core
 #theme: auto
 
+excerpt:
+  depth: 2
+  excerpt_excludes: []
+  more_excludes: []
+  hideWholePostExcerpts: true
+
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment
 deploy:
