@@ -13,8 +13,8 @@
   },
   "dependencies": {
     "hexo": "github:mei-lun/hexo#master",
-    "hexo-auto-excerpt": "^1.1.2",
-    "hexo-enhancer": "^1.0.10",
+    "hexo-enhancer": "github:mei-lun/hexo-enhancer#master",
+    "hexo-excerpt": "github:mei-lun/hexo-excerpt#master",
     "hexo-front-matter": "github:mei-lun/hexo-front-matter#master",
     "hexo-generator-archive": "^2.0.0",
     "hexo-generator-category": "^2.0.0",

@@ -89,7 +89,7 @@ pagination_dir: page
 
 # Include / Exclude file(s)
 ## include:/exclude: options only apply to the 'source/' folder
-include:
+include: source/
 exclude:
 ignore:
 
@@ -97,14 +97,8 @@ ignore:
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
 theme: mylandscape
-#theme: anatole-core
+##theme: landscape
 #theme: auto
-
-excerpt:
-  depth: 2
-  excerpt_excludes: []
-  more_excludes: []
-  hideWholePostExcerpts: true
 
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment
@@ -112,3 +106,9 @@ deploy:
   type: git
   repo: https://github.com/mei-lun/mei-lun
   branch: [main]
+
+excerpt:
+  depth: 3
+  excerpt_excludes: []
+  more_excludes: []
+  hideWholePostExcerpts: true
