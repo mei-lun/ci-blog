@@ -12,9 +12,9 @@
     "version": "8.1.1"
   },
   "dependencies": {
-    "hexo": "^8.0.0",
-    "hexo-auto-canonical": "^0.1.1",
+    "hexo": "github:mei-lun/hexo#master",
     "hexo-enhancer": "^1.0.10",
+    "hexo-front-matter": "github:mei-lun/hexo-front-matter#master",
     "hexo-generator-archive": "^2.0.0",
     "hexo-generator-category": "^2.0.0",
     "hexo-generator-index": "^4.0.0",
