@@ -8,3 +8,5 @@
 [submodule "themes/mylandscape"]
 	path = themes/mylandscape
 	url = https://github.com/mei-lun/hexo-theme-landscape.git
+	branch = master
+	update = rebase
