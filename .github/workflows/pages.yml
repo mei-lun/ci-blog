@@ -30,6 +30,8 @@ jobs:
         run: npx hexo clean
       - name: Build
         run: npm run build  # 确保产物输出到 ./public
+      - name: Hexo generate
+        run: npx hexo generate
 
       # 🔥 修正后的部署步骤（关键修改）
       - name: Deploy to ghpage repo (GitHub Pages)
