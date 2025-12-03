@@ -26,7 +26,8 @@ jobs:
 
       - name: Install Dependencies
         run: npm install
-
+      - name: Clean Hexo
+        run: npx hexo clean
       - name: Build
         run: npm run build  # 确保产物输出到 ./public
 
