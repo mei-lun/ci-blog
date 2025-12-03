@@ -18,17 +18,20 @@ jobs:
       - name: 显示子模块状态
         run: git submodule status
 
-      - name: Use Node.js 22
+      - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "20"
           cache: "npm"  # 简化缓存配置
 
       - name: Install Dependencies
         run: npm install
-
+      - name: Clean Hexo
+        run: npx hexo clean
       - name: Build
         run: npm run build  # 确保产物输出到 ./public
+      - name: Hexo generate
+        run: npx hexo generate
 
       # 🔥 修正后的部署步骤（关键修改）
       - name: Deploy to ghpage repo (GitHub Pages)
