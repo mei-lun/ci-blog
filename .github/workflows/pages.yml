@@ -13,7 +13,8 @@ jobs:
           #token: ${{ secrets.GITHUB_TOKEN }}
           token: ${{ secrets.GH_PAGES_DEPLOY_TOKEN }}
           submodules: recursive
-          fetch-depth: 0
+      - name: 更新子模块到最新提交
+        run: git submodule update --init --remote --recursive
       - name: 显示子模块状态
         run: git submodule status
 
