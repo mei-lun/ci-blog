@@ -14,6 +14,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           # If your repository depends on submodule, please see: https://github.com/actions/checkout
           submodules: recursive
+      - name: 更新子模块到最新提交
+        run: git submodule update --init --remote --recursive
       - name: Use Node.js 22
         uses: actions/setup-node@v4
         with:
