@@ -1,5 +1,5 @@
 diff --git a/node_modules/hexo-asset-file-carp/index.js b/node_modules/hexo-asset-file-carp/index.js
-index bc2e636..6be6b29 100644
+index bc2e636..92045f7 100644
 --- a/node_modules/hexo-asset-file-carp/index.js
 +++ b/node_modules/hexo-asset-file-carp/index.js
 @@ -133,9 +133,12 @@ hexo.extend.filter.register('after_post_render', function (data) {
@@ -16,12 +16,15 @@ index bc2e636..6be6b29 100644
              // For "about" page, the first part of "src" can't be removed.
              // 关于 "about" 页面，"src" 的第一个部分不能被移除。
              // In addition, to support multi-level local directory.
-@@ -157,11 +160,11 @@ hexo.extend.filter.register('after_post_render', function (data) {
+@@ -156,12 +159,13 @@ hexo.extend.filter.register('after_post_render', function (data) {
+             // if (srcArray.length > 1)
              //   srcArray.shift();
              src = srcArray.join('/');
-             $(this).attr('src', config.root + link + src);
+-            $(this).attr('src', config.root + link + src);
 -            // console.info && // console.info("update link as:-->" + config.root + link + src);
-+            console.info && console.info("update link as:-->" + config.root + link + src);
++            $(this).attr('src', link + src);
++            // console.info && console.info("config.root:" + config.root + " link: " + link + " src: " + src);
++            console.info && console.info("update link as:-->" + link + src);
            }
          } else {
 -          // console.info && // console.info("no src attr, skipped...");
