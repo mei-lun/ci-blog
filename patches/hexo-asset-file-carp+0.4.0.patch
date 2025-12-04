@@ -1,14 +1,29 @@
 diff --git a/node_modules/hexo-asset-file-carp/index.js b/node_modules/hexo-asset-file-carp/index.js
-index bc2e636..92045f7 100644
+index bc2e636..723e22f 100644
 --- a/node_modules/hexo-asset-file-carp/index.js
 +++ b/node_modules/hexo-asset-file-carp/index.js
-@@ -133,9 +133,12 @@ hexo.extend.filter.register('after_post_render', function (data) {
+@@ -87,7 +87,8 @@ hexo.extend.filter.register('after_post_render', function (data) {
+   if (config.post_asset_folder) {
+     // 文章的永久链接，即文章在网站上的唯一链接地址。
+     var link = data.permalink;
+-
++    var tmproot = config.root;
++    config.root = "/";
+     /**
+      * 只有 hexo 3 版本特殊
+      * 在 Hexo 3.1.1 中，“关于”页面的永久链接格式是类似于“.../about/index.html”。
+@@ -129,13 +130,17 @@ hexo.extend.filter.register('after_post_render', function (data) {
+           // 将 src 属性中的反斜杠 \ 替换为正斜杠 /，处理 Windows 风格的路径。
+           // For windows style path, we replace '\' to '/'.
+           var src = $(this).attr('src').replace('\\', '/');
++          var pattern = new RegExp('^' + tmproot);
++          var correctedSrc = src.replace(pattern, '');
++          src = correctedSrc;
++          // console.log("src:", src, "root: ", tmproot, "correctedSrc:", correctedSrc);
+           /**
             * 不处理网络链接
             * 不处理绝对路径
             */
-+          console.info && console.info("update link as:-->", !/http[s]*.*|\/\/.*/.test(src) &&
-+            // \s*：匹配零个或多个空白字符。
-+            !/^\s*\//.test(src))
            if (!/http[s]*.*|\/\/.*/.test(src) &&
              // \s*：匹配零个或多个空白字符。
 -            !/^\s*\//.test(src)) {
@@ -16,15 +31,13 @@ index bc2e636..92045f7 100644
              // For "about" page, the first part of "src" can't be removed.
              // 关于 "about" 页面，"src" 的第一个部分不能被移除。
              // In addition, to support multi-level local directory.
-@@ -156,12 +159,13 @@ hexo.extend.filter.register('after_post_render', function (data) {
-             // if (srcArray.length > 1)
+@@ -157,14 +162,16 @@ hexo.extend.filter.register('after_post_render', function (data) {
              //   srcArray.shift();
              src = srcArray.join('/');
--            $(this).attr('src', config.root + link + src);
+             $(this).attr('src', config.root + link + src);
 -            // console.info && // console.info("update link as:-->" + config.root + link + src);
-+            $(this).attr('src', link + src);
-+            // console.info && console.info("config.root:" + config.root + " link: " + link + " src: " + src);
-+            console.info && console.info("update link as:-->" + link + src);
++            console.info && console.info("config.root:" + config.root + " link: " + link + " src: " + src);
++            console.info && console.info("update link as:-->" + config.root + link + src);
            }
          } else {
 -          // console.info && // console.info("no src attr, skipped...");
@@ -34,3 +47,8 @@ index bc2e636..92045f7 100644
          }
        });
        data[key] = $.html();
+     }
++    config.root = tmproot;
+   }
+ });
+\ No newline at end of file
