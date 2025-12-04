@@ -1,5 +1,5 @@
 diff --git a/node_modules/hexo-asset-file-carp/index.js b/node_modules/hexo-asset-file-carp/index.js
-index bc2e636..723e22f 100644
+index bc2e636..d2852ec 100644
 --- a/node_modules/hexo-asset-file-carp/index.js
 +++ b/node_modules/hexo-asset-file-carp/index.js
 @@ -87,7 +87,8 @@ hexo.extend.filter.register('after_post_render', function (data) {
@@ -12,7 +12,7 @@ index bc2e636..723e22f 100644
      /**
       * 只有 hexo 3 版本特殊
       * 在 Hexo 3.1.1 中，“关于”页面的永久链接格式是类似于“.../about/index.html”。
-@@ -129,13 +130,17 @@ hexo.extend.filter.register('after_post_render', function (data) {
+@@ -129,6 +130,13 @@ hexo.extend.filter.register('after_post_render', function (data) {
            // 将 src 属性中的反斜杠 \ 替换为正斜杠 /，处理 Windows 风格的路径。
            // For windows style path, we replace '\' to '/'.
            var src = $(this).attr('src').replace('\\', '/');
@@ -20,18 +20,13 @@ index bc2e636..723e22f 100644
 +          var correctedSrc = src.replace(pattern, '');
 +          src = correctedSrc;
 +          // console.log("src:", src, "root: ", tmproot, "correctedSrc:", correctedSrc);
++          // console.log("tiaojian:", !/http[s]*.*|\/\/.*/.test(src) &&
++          //   // \s*：匹配零个或多个空白字符。
++          //   !/^\s*\//.test(src));
            /**
             * 不处理网络链接
             * 不处理绝对路径
-            */
-           if (!/http[s]*.*|\/\/.*/.test(src) &&
-             // \s*：匹配零个或多个空白字符。
--            !/^\s*\//.test(src)) {
-+            /^\s*\//.test(src)) {
-             // For "about" page, the first part of "src" can't be removed.
-             // 关于 "about" 页面，"src" 的第一个部分不能被移除。
-             // In addition, to support multi-level local directory.
-@@ -157,14 +162,16 @@ hexo.extend.filter.register('after_post_render', function (data) {
+@@ -157,14 +165,16 @@ hexo.extend.filter.register('after_post_render', function (data) {
              //   srcArray.shift();
              src = srcArray.join('/');
              $(this).attr('src', config.root + link + src);
