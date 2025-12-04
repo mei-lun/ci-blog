@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "hexo": "github:mei-lun/hexo#master",
+    "hexo-asset-file-carp": "^0.4.0",
     "hexo-enhancer": "github:mei-lun/hexo-enhancer#master",
     "hexo-excerpt": "github:mei-lun/hexo-excerpt#master",
     "hexo-front-matter": "github:mei-lun/hexo-front-matter#master",
