@@ -25,11 +25,9 @@ jobs:
           cache: "npm"  # 简化缓存配置
 
       - name: Install Dependencies
-        run: |
-          # 清除 npm 缓存中关于 hexo-enhancer 的部分（或全部清除）
-          npm cache clean --force
-          # 删除 node_modules 和 package-lock.json 以确保全新安装
-          rm -rf node_modules package-lock.json
+        run: npm cache clean --force
+        # 删除 node_modules 和 package-lock.json 以确保全新安装
+        run: rm -rf node_modules package-lock.json
         # 重新安装所有依赖，此时会从GitHub拉取 hexo-enhancer 仓库最新的 master 提交
         run: npm install
       - name: Clean Hexo
